@@ -109,7 +109,7 @@ void MeshCommunication::redistribute (ParallelMesh &mesh) const
   // (2) receive elements from all processors, watching for duplicates
   // (3) deleting all nonlocal elements elements
   // (4) obtaining required ghost elements from neighboring processors
-  parallel_only();
+  libmesh_parallel_only(mesh.communicator());
   libmesh_assert (!mesh.is_serial());
   libmesh_assert (MeshTools::n_elem(mesh.unpartitioned_elements_begin(),
 				    mesh.unpartitioned_elements_end()) == 0);
@@ -315,7 +315,7 @@ void MeshCommunication::gather_neighboring_elements (ParallelMesh &mesh) const
     return;
 
   // This function must be run on all processors at once
-  parallel_only();
+  libmesh_parallel_only(mesh.communicator());
 
   START_LOG("gather_neighboring_elements()","MeshCommunication");
 
@@ -674,7 +674,7 @@ void MeshCommunication::broadcast (MeshBase& mesh) const
     return;
 
   // This function must be run on all processors at once
-  parallel_only();
+  libmesh_parallel_only(mesh.communicator());
 
   START_LOG("broadcast()","MeshCommunication");
 
@@ -739,7 +739,7 @@ void MeshCommunication::allgather (ParallelMesh& mesh) const
     return;
 
   // This function must be run on all processors at once
-  parallel_only();
+  libmesh_parallel_only(mesh.communicator());
 
   START_LOG("allgather()","MeshCommunication");
 
@@ -816,7 +816,7 @@ void MeshCommunication::make_node_ids_parallel_consistent
    LocationMap<Node> &loc_map)
 {
   // This function must be run on all processors at once
-  parallel_only();
+  libmesh_parallel_only(mesh.communicator());
 
   START_LOG ("make_node_ids_parallel_consistent()", "MeshCommunication");
 
@@ -835,7 +835,7 @@ void MeshCommunication::make_node_ids_parallel_consistent
 void MeshCommunication::make_elems_parallel_consistent(MeshBase &mesh)
 {
   // This function must be run on all processors at once
-  parallel_only();
+  libmesh_parallel_only(mesh.communicator());
 
   START_LOG ("make_elems_parallel_consistent()", "MeshCommunication");
 
@@ -902,7 +902,7 @@ void MeshCommunication::make_node_proc_ids_parallel_consistent
   START_LOG ("make_node_proc_ids_parallel_consistent()", "MeshCommunication");
 
   // This function must be run on all processors at once
-  parallel_only();
+  libmesh_parallel_only(mesh.communicator());
 
   // When this function is called, each section of a parallelized mesh
   // should be in the following state:
@@ -933,7 +933,7 @@ void MeshCommunication::make_nodes_parallel_consistent
    LocationMap<Node> &loc_map)
 {
   // This function must be run on all processors at once
-  parallel_only();
+  libmesh_parallel_only(mesh.communicator());
 
   // Create the loc_map if it hasn't been done already
   bool need_map_update = (mesh.nodes_begin() != mesh.nodes_end() &&
