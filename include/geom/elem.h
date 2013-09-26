@@ -287,6 +287,13 @@ public:
   bool on_boundary () const;
 
   /**
+   * @returns \p true if side \p s of this element is coincident
+   * with a boundary (indicated by a \p NULL neighbor), \p false
+   * otherwise.
+   */
+  bool on_boundary (const unsigned int s) const;
+
+  /**
    * @returns \p true if this element is semilocal to the calling
    * processor, which must specify its rank.
    */
@@ -1640,6 +1647,18 @@ bool Elem::on_boundary () const
   // By convention, the element is on the boundary
   // if it has a NULL neighbor.
   return this->has_neighbor(NULL);
+}
+
+
+
+inline
+bool Elem::on_boundary (const unsigned int s) const
+{
+  libmesh_assert_less (s, this->n_sides());
+
+  // By convention, the element is on the boundary
+  // if it has a NULL neighbor.
+  return (NULL == this->neighbor(s));
 }
 
 
