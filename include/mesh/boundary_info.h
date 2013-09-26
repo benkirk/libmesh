@@ -41,6 +41,7 @@ class Node;
 class MeshBase;
 class UnstructuredMesh;
 class MeshData;
+class MeshfreeInterpolation;
 
 
 /**
@@ -591,6 +592,18 @@ private:
    */
   std::map<boundary_id_type, std::string> _ns_id_to_name;
 
+  /**
+   * This structure maps a side set id to a level set function that
+   * can be used as an analytic CAD surrogate.
+   */
+  typedef std::map<boundary_id_type, MeshfreeInterpolation*> surf_fn_type;
+  typedef std::pair<boundary_id_type, MeshfreeInterpolation*> surf_fn_kv_type;
+  surf_fn_type _ss_id_to_surf_fn;
+
+  /**
+   * Construct the level set fucntion for the requested side set id.
+   */
+  void build_ss_level_set (const boundary_id_type id);
 
   //   /**
   //    * Functor class for printing a single node's info

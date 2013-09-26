@@ -31,6 +31,10 @@
 #include "libmesh/partitioner.h"
 #include "libmesh/remote_elem.h"
 #include "libmesh/unstructured_mesh.h"
+#include "libmesh/meshfree_interpolation.h"
+#include "libmesh/radial_basis_interpolation.h"
+#include "libmesh/fe_base.h"
+#include "libmesh/quadrature_gauss.h"
 
 namespace libMesh
 {
@@ -109,8 +113,12 @@ BoundaryInfo& BoundaryInfo::operator=(const BoundaryInfo& other_boundary_info)
   _side_boundary_ids = other_boundary_info._side_boundary_ids;
   _node_boundary_ids = other_boundary_info._node_boundary_ids;
 
+  // Dup the _ss_id_to_surf_fn data structure.
+  libmesh_error();
+
   return *this;
 }
+
 
 
 BoundaryInfo::~BoundaryInfo()
@@ -127,6 +135,17 @@ void BoundaryInfo::clear()
   _boundary_ids.clear();
   _side_boundary_ids.clear();
   _node_boundary_ids.clear();
+
+  // clear the _ss_id_to_surf_fn data structure.
+  for (surf_fn_type::iterator it = _ss_id_to_surf_fn.begin();
+       it != _ss_id_to_surf_fn.end(); ++it)
+    if (it->second)
+      {
+	delete it->second;
+	it->second = NULL;
+      }
+  _ss_id_to_surf_fn.clear();
+
 }
 
 
@@ -1829,6 +1848,7 @@ void BoundaryInfo::print_summary(std::ostream& out_stream) const
 }
 
 
+
 const std::string& BoundaryInfo::get_sideset_name(boundary_id_type id) const
 {
   static const std::string empty_string;
@@ -1841,10 +1861,13 @@ const std::string& BoundaryInfo::get_sideset_name(boundary_id_type id) const
 }
 
 
+
 std::string& BoundaryInfo::sideset_name(boundary_id_type id)
 {
   return _ss_id_to_name[id];
 }
+
+
 
 const std::string& BoundaryInfo::get_nodeset_name(boundary_id_type id) const
 {
@@ -1857,10 +1880,14 @@ const std::string& BoundaryInfo::get_nodeset_name(boundary_id_type id) const
     return it->second;
 }
 
+
+
 std::string& BoundaryInfo::nodeset_name(boundary_id_type id)
 {
   return _ns_id_to_name[id];
 }
+
+
 
 boundary_id_type BoundaryInfo::get_id_by_name(const std::string& name) const
 {
@@ -2026,4 +2053,99 @@ void BoundaryInfo::_find_id_maps
 }
 
 
+
+void BoundaryInfo::build_ss_level_set (const boundary_id_type id)
+ {
+   if (!this->get_side_boundary_ids().count(id))
+     {
+       libMesh::err << "ERROR: requested boundary id "
+		    << id
+		    << " does not exist.\n"
+		    << "Have you properly initialized the BoundaryInfo data structure?\n";
+       libmesh_error();
+     }
+
+   const unsigned int dim = _mesh.mesh_dimension();
+
+   MeshfreeInterpolation *mfi = _ss_id_to_surf_fn[id];
+
+   // Construct the meshfree interpolation object to hold the level set function for this
+   // boundary, provided it is not already there.
+   if (mfi == NULL)
+     {
+       libmesh_here();
+       switch (dim)
+	 {
+	 case 1:
+	   return;
+	 case 2:
+	   mfi = new RadialBasisInterpolation<2> (this->comm());
+	   break;
+	 case 3:
+	   mfi = new RadialBasisInterpolation<3> (this->comm());
+	   break;
+	 default:
+	   break;
+	 }
+     }
+
+   libmesh_assert (mfi != NULL);
+
+   mfi->clear();
+   mfi->set_field_variables (std::vector<std::string> (1, "phi"));
+   std::vector<Point>  src_pts;
+   std::vector<Number> src_vals;
+
+
+   AutoPtr<FEBase> fe_face (FEBase::build (dim-1, FEType(FIRST, LAGRANGE)));
+   QGauss qface(dim-1, FIRST);
+   fe_face->attach_quadrature_rule(&qface);
+
+   const std::vector<Point>& q_point = fe_face->get_xyz();
+
+   // The element shape functions evaluated at the quadrature points.
+   //const std::vector<std::vector<Real> > &psi = fe_face->get_phi();
+   const std::vector<Point>          &normals = fe_face->get_normals();
+   std::vector<boundary_id_type> elem_bc_ids;
+   std::set<dof_id_type> inserted_node_ids;
+
+   // Loop over the elements in the mesh, and set the signed distance function
+   // values based on the element faces for the requested side id.
+   const MeshBase::const_element_iterator end_el = _mesh.local_level_elements_end(0);
+   for (MeshBase::const_element_iterator el = _mesh.local_level_elements_begin(0);
+	el != end_el; ++el)
+     {
+       const Elem *elem = *el;
+
+       for (unsigned int s=0; s<elem->n_sides(); s++)
+	 if (elem->on_boundary(s) && this->has_boundary_id(elem,s,id))
+	   {
+	     fe_face->reinit(elem,s);
+
+	     // add only the *local* nodes, if not already, with phi=0.
+	     for (unsigned int n=0; n<elem->n_nodes(); n++)
+	       {
+		 const Node *node = elem->get_node(n);
+
+		 if ((node->processor_id() == this->processor_id()) &&
+		     !inserted_node_ids.count(node->id()))
+		   {
+		     src_pts.push_back(*node);
+		     src_vals.push_back(0.);
+		     inserted_node_ids.insert(node->id());
+		   }
+	       }
+
+	     // construct a signed distance
+	     AutoPtr<Elem> side = elem->build_side(s);
+	     const Real hmin = side->hmin();
+
+	     src_pts.push_back (q_point[0] + normals[0]*hmin); /**/ src_vals.push_back ( hmin);
+	     src_pts.push_back (q_point[0] - normals[0]*hmin); /**/ src_vals.push_back (-hmin);
+	   }
+     }
+   // all done!
+   mfi->prepare_for_use();
+   mfi->print_info();
+ }
 } // namespace libMesh
