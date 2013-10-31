@@ -97,6 +97,12 @@ public:
                                        const std::vector<Point>  &tgt_pts,
                                        std::vector<Number> &tgt_vals) const;
 
+  /**
+   * Approximate the field data gradient at target points.
+   */
+  virtual void approx_field_data_gradient (const std::vector<std::string> &field_names,
+					   const std::vector<Point>  &tgt_pts,
+					   std::vector<Gradient> &tgt_gradients) const;
 };
 
 } // namespace libMesh

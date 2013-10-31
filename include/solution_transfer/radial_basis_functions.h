@@ -86,6 +86,11 @@ public:
    * Evaluate the radial basis function at the reqested location.
    */
   Real operator()(Real /* rad */) const { libmesh_not_implemented(); return 0.; }
+
+  /**
+   * Evaluate the radial basis function's derivative at the reqested location.
+   */
+  Real ddr(Real /* rad */) const { libmesh_not_implemented(); return 0.; }
 };
 
 

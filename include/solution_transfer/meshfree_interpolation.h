@@ -26,6 +26,7 @@
 #include "libmesh/auto_ptr.h"
 #include "libmesh/point.h"
 #include "libmesh/parallel_object.h"
+#include "libmesh/vector_value.h"
 #ifdef LIBMESH_HAVE_NANOFLANN
 #  include "libmesh/nanoflann.hpp"
 #endif
@@ -146,6 +147,14 @@ public:
   virtual void interpolate_field_data (const std::vector<std::string> &field_names,
                                        const std::vector<Point>  &tgt_pts,
                                        std::vector<Number> &tgt_vals) const = 0;
+
+  /**
+   * Approximate the field data gradient at target points.
+   * Pure virtual, must be overriden in derived classes.
+   */
+  virtual void approx_field_data_gradient (const std::vector<std::string> &field_names,
+					   const std::vector<Point>  &tgt_pts,
+					   std::vector<Gradient> &tgt_gradients) const = 0;
 
 protected:
 
@@ -344,6 +353,13 @@ public:
                                        const std::vector<Point>  &tgt_pts,
                                        std::vector<Number> &tgt_vals) const;
 
+  /**
+   * Approximate the field data gradient at target points.
+   */
+  virtual void approx_field_data_gradient (const std::vector<std::string> & /* field_names */,
+					   const std::vector<Point>  & /* tgt_pts */,
+					   std::vector<Gradient> & /* tgt_gradients */) const
+  { libmesh_not_implemented(); }
 };
 
 } // namespace libMesh

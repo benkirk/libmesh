@@ -201,8 +201,68 @@ void RadialBasisInterpolation<KDDim,RBF>::interpolate_field_data (const std::vec
 
 
 
+  template <unsigned int KDDim, class RBF>
+  void RadialBasisInterpolation<KDDim,RBF>::approx_field_data_gradient (const std::vector<std::string> &field_names,
+									const std::vector<Point>  &tgt_pts,
+									std::vector<Gradient> &tgt_gradients) const
+  {
+    START_LOG ("approx_field_data_gradient()", "RadialBasisInterpolation<>");
+
+    libmesh_experimental();
+
+    const unsigned int
+      n_vars    = this->n_field_variables(),
+      n_src_pts = this->_src_pts.size(),
+      n_tgt_pts = tgt_pts.size();
+
+    libmesh_assert_equal_to (_weights.size(),    this->_src_vals.size());
+    libmesh_assert_equal_to (field_names.size(), this->n_field_variables());
+
+    // If we already have field variables, we assume we are appending.
+    // that means the names and ordering better be identical!
+    if (this->_names.size() != field_names.size())
+      {
+	libMesh::err << "ERROR:  when adding field data to an existing list the\n"
+		     << "varaible list must be the same!\n";
+	libmesh_error();
+      }
+    for (unsigned int v=0; v<this->_names.size(); v++)
+      if (_names[v] != field_names[v])
+	{
+	  libMesh::err << "ERROR:  when adding field data to an existing list the\n"
+		       << "varaible list must be the same!\n";
+	  libmesh_error();
+	}
+
+
+    tgt_gradients.resize (n_tgt_pts*n_vars); /**/ std::fill (tgt_gradients.begin(), tgt_gradients.end(), Gradient(0.));
+
+    // RBF rbf(_r_bbox);
+
+    // for (unsigned int tgt=0; tgt<n_tgt_pts; tgt++)
+    //   {
+    // 	const Point &p (tgt_pts[tgt]);
+
+    // 	for (unsigned int i=0; i<n_src_pts; i++)
+    // 	  {
+    // 	    const Point &x_i(_src_pts[i]);
+    // 	    const Real
+    // 	      r_i   = (p - x_i).size(),
+    // 	      phi_i = rbf(r_i);
+
+    // 	    for (unsigned int var=0; var<n_vars; var++)
+    // 	      tgt_vals[tgt*n_vars + var] += _weights[i*n_vars + var]*phi_i;
+    // 	  }
+    //   }
+
+    STOP_LOG ("approx_field_data_gradient()", "RadialBasisInterpolation<>");
+  }
+
+
 // ------------------------------------------------------------
 // Explicit Instantiations
+template class RadialBasisInterpolation<2, WendlandRBF<2,2> >;
+
 template class RadialBasisInterpolation<3, WendlandRBF<3,0> >;
 template class RadialBasisInterpolation<3, WendlandRBF<3,2> >;
 template class RadialBasisInterpolation<3, WendlandRBF<3,4> >;
