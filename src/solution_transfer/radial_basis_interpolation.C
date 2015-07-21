@@ -237,23 +237,23 @@ void RadialBasisInterpolation<KDDim,RBF>::interpolate_field_data (const std::vec
 
     tgt_gradients.resize (n_tgt_pts*n_vars); /**/ std::fill (tgt_gradients.begin(), tgt_gradients.end(), Gradient(0.));
 
-    // RBF rbf(_r_bbox);
+     RBF rbf(_r_bbox);
 
-    // for (unsigned int tgt=0; tgt<n_tgt_pts; tgt++)
-    //   {
-    // 	const Point &p (tgt_pts[tgt]);
+     for (unsigned int tgt=0; tgt<n_tgt_pts; tgt++)
+       {
+     	const Point &p (tgt_pts[tgt]);
 
-    // 	for (unsigned int i=0; i<n_src_pts; i++)
-    // 	  {
-    // 	    const Point &x_i(_src_pts[i]);
-    // 	    const Real
-    // 	      r_i   = (p - x_i).size(),
-    // 	      phi_i = rbf(r_i);
+     	for (unsigned int i=0; i<n_src_pts; i++)
+    	  {
+     	    const Point &x_i(_src_pts[i]);
+	    const Point y_i   = p - x_i;
+     	    const Real r_i    = y_i.size();
+     	    const Real dphi_i = rbf.ddr(r_i);
 
-    // 	    for (unsigned int var=0; var<n_vars; var++)
-    // 	      tgt_vals[tgt*n_vars + var] += _weights[i*n_vars + var]*phi_i;
-    // 	  }
-    //   }
+     	    for (unsigned int var=0; var<n_vars; var++)
+     	      tgt_gradients[tgt*n_vars + var] += _weights[i*n_vars + var]*Gradient(dphi_i*y_i(0)/r_i,dphi_i*y_i(1)/r_i,dphi_i*y_i(2)/r_i);
+     	  }
+       }
 
     STOP_LOG ("approx_field_data_gradient()", "RadialBasisInterpolation<>");
   }

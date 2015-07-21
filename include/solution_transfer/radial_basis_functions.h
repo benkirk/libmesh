@@ -110,6 +110,17 @@ Real WendlandRBF<3,0>::operator()(Real rad) const
 
 template<>
 inline
+Real WendlandRBF<3,0>::ddr(Real rad) const
+{
+  if (rad > _rcut) return 0.;
+
+  rad /= _rcut;
+
+  return (-2.*(1.-rad));
+}
+
+template<>
+inline
 Real WendlandRBF<3,2>::operator()(Real rad) const
 {
   if (rad > _rcut) return 0.;
@@ -118,6 +129,19 @@ Real WendlandRBF<3,2>::operator()(Real rad) const
 
   return Utility::pow<4>(1.-rad)*(4.*rad + 1.);
 }
+
+
+template<>
+inline
+Real WendlandRBF<3,2>::ddr(Real rad) const
+{
+  if (rad > _rcut) return 0.;
+
+  rad /= _rcut;
+
+  return (4.*Utility::pow<3>(1.-rad)*(3.*rad + 2.));
+}
+
 
 template<>
 inline
@@ -132,6 +156,18 @@ Real WendlandRBF<3,4>::operator()(Real rad) const
 
 template<>
 inline
+Real WendlandRBF<3,4>::ddr(Real rad) const
+{
+  if (rad > _rcut) return 0.;
+
+  rad /= _rcut;
+
+  return (4.*Utility::pow<5>(1.-rad)*(35.*rad*rad + 40.*rad + 9.));
+}
+
+
+template<>
+inline
 Real WendlandRBF<3,8>::operator()(Real rad) const
 {
   if (rad > _rcut) return 0.;
@@ -140,6 +176,18 @@ Real WendlandRBF<3,8>::operator()(Real rad) const
 
   return Utility::pow<8>(1.-rad)*(((32.*rad + 25.)*rad + 8.)*rad + 1.);
 }
+
+template<>
+inline
+Real WendlandRBF<3,8>::ddr(Real rad) const
+{
+  if (rad > _rcut) return 0.;
+
+  rad /= _rcut;
+
+  return (2.*Utility::pow<7>(1.-rad)*(80.*rad*rad*rad + 223.*rad*rad + 53.*rad + 8));
+}
+
 
 
 } // namespace libMesh
