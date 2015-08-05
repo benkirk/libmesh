@@ -139,7 +139,7 @@ Real WendlandRBF<3,2>::ddr(Real rad) const
 
   rad /= _rcut;
 
-  return (4.*Utility::pow<3>(1.-rad)*(3.*rad + 2.));
+  return (-20.*rad*Utility::pow<3>(1.-rad));
 }
 
 
@@ -162,7 +162,7 @@ Real WendlandRBF<3,4>::ddr(Real rad) const
 
   rad /= _rcut;
 
-  return (4.*Utility::pow<5>(1.-rad)*(35.*rad*rad + 40.*rad + 9.));
+  return (-2.*Utility::pow<5>(1.-rad)*(140.*rad*rad - 7.*rad + 5.));
 }
 
 
@@ -185,7 +185,7 @@ Real WendlandRBF<3,8>::ddr(Real rad) const
 
   rad /= _rcut;
 
-  return (2.*Utility::pow<7>(1.-rad)*(80.*rad*rad*rad + 223.*rad*rad + 53.*rad + 8));
+  return (-22.*Utility::pow<7>(1.-rad)*rad*(16.*rad*rad + 7.*rad + 1));
 }
 
 
